@@ -5,7 +5,7 @@ fn main() {
 }
 
 fn part1(input: &str) -> String {
-    todo!();
+    "".to_string()
 }
 
 #[cfg(test)]
