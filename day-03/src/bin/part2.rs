@@ -31,7 +31,7 @@ fn part1(input: &str) -> String {
                             x += s.len() as i32;
                             s = "".to_string();
                         }
-                        if c != '.' {
+                        if c == '*' {
                             spec.push((x, y, c));
                         }
                         x += 1;
@@ -49,16 +49,19 @@ fn part1(input: &str) -> String {
         .collect();
 
     let mut sum = 0;
-    let mut included: Vec<i32> = vec![];
-    for n in nums.iter() {
-        for s in spec.iter() {
+    for s in spec.iter() {
+        let mut count = 0;
+        let mut included: Vec<i32> = vec![];
+        for n in nums.iter() {
             let valid_x = s.0 <= cmp::min(n.0 + n.2, max_x as i32) && s.0 >= cmp::max(0, n.0 - 1);
             let valid_y = s.1 <= cmp::min(n.1 + 1, max_y as i32) && s.1 >= cmp::max(0, n.1 - 1);
             if valid_x && valid_y {
+                count += 1;
                 included.push(n.3);
-                sum += n.3;
-                break;
             }
+        }
+        if count == 2 {
+            sum += included[0] * included[1];
         }
     }
 
@@ -83,18 +86,6 @@ mod tests {
 ...$.*....
 .664.598..",
         );
-        assert_eq!(result, "4361".to_string());
-    }
-
-    fn test2() {
-        let result = part1(
-            ".......
-.......
-......1
-.....1*
-......1
-.......",
-        );
-        assert_eq!(result, "0".to_string());
+        assert_eq!(result, "467835".to_string());
     }
 }
