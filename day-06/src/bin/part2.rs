@@ -6,11 +6,11 @@ fn main() {
 
 #[derive(Debug)]
 struct Race {
-    time: u32,
-    dist: u32,
+    time: u64,
+    dist: u64,
 }
 
-fn compute_dist(speed: u32, move_time: u32) -> u32 {
+fn compute_dist(speed: u64, move_time: u64) -> u64 {
     speed * move_time
 }
 
@@ -20,31 +20,24 @@ fn part1(input: &str) -> String {
         .map(|line| {
             line.split(" ")
                 .filter(|s| s.len() > 0)
-                .filter(|s| s.parse::<u32>().is_ok())
+                .filter(|s| s.parse::<u64>().is_ok())
                 .fold("".to_owned(), |acc, s| acc + s)
-                .parse::<u32>()
+                .parse::<u64>()
+                .unwrap()
         })
         .collect();
-    dbg!(&raw);
-    let mut race: Race = Race { time: raw[0][0], dist: raw[0][1] }
+    let race: Race = Race {
+        time: raw[0],
+        dist: raw[1],
+    };
 
-    let result = races
-        .iter()
-        .map(|r| {
-            dbg!(r.time as usize % 2);
-            (0..r.time / 2)
-                .map(|i| compute_dist(i as u32, r.time - i as u32))
-                .filter(|d| d > &r.dist)
-                .count()
-                * 2
-                + 1
-                + (r.time as usize % 2)
-        })
-        .inspect(|a| {
-            dbg!(a);
-        })
-        .reduce(|acc, n| acc * n)
-        .unwrap();
+    let result = (0..race.time / 2)
+        .map(|i| compute_dist(i as u64, race.time - i as u64))
+        .filter(|d| d > &race.dist)
+        .count()
+        * 2
+        + 1
+        + (race.time as usize % 2);
 
     result.to_string()
 }
@@ -59,6 +52,6 @@ mod tests {
             "Time:      7  15   30
 Distance:  9  40  200",
         );
-        assert_eq!(result, "288".to_string());
+        assert_eq!(result, "71503".to_string());
     }
 }
