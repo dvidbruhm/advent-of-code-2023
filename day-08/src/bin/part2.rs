@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::collections::BTreeMap;
 
 fn main() {
     let input = include_str!("input1.txt");
@@ -12,14 +12,23 @@ enum Direction {
     Right,
 }
 
-#[derive(Debug, Clone)]
-struct Node {
-    name: String,
-    left: String,
-    right: String,
+fn lcm(nums: &[usize]) -> usize {
+    if nums.len() == 1 {
+        return nums[0];
+    }
+    let a = nums[0];
+    let b = lcm(&nums[1..]);
+    a * b / gcd_of_two_numbers(a, b)
 }
 
-fn parse_input(input: &str) -> (Vec<Direction>, Vec<Node>) {
+fn gcd_of_two_numbers(a: usize, b: usize) -> usize {
+    if b == 0 {
+        return a;
+    }
+    gcd_of_two_numbers(b, a % b)
+}
+
+fn parse_input(input: &str) -> (Vec<Direction>, BTreeMap<&str, (&str, &str)>) {
     let directions: Vec<Direction> = input
         .lines()
         .take(1)
@@ -32,53 +41,56 @@ fn parse_input(input: &str) -> (Vec<Direction>, Vec<Node>) {
         })
         .collect();
 
-    let mut nodes: Vec<Node> = input
+    let mut map = BTreeMap::new();
+    let _ = input
         .lines()
         .filter(|line| line.contains("="))
-        .map(|line| Node {
-            name: line[0..3].to_string(),
-            left: line[7..10].to_string(),
-            right: line[12..15].to_string(),
-        })
-        .collect();
-    nodes.sort_by(|a, b| a.name.cmp(&b.name));
-    (directions, nodes)
+        .for_each(|line| {
+            map.insert(&line[0..3], (&line[7..10], &line[12..15]));
+        });
+    (directions, map)
 }
 
 fn part1(input: &str) -> String {
-    let (directions, nodes) = parse_input(input);
+    let (directions, map) = parse_input(input);
+    let mut current_nodes: Vec<&&str> = map
+        .keys()
+        .filter(|node| node.ends_with('A'))
+        .map(|node| node)
+        .collect();
 
-    let mut current_nodes = nodes.clone();
-    current_nodes.retain(|node| node.name.chars().last().unwrap() == 'A');
     let mut finished = false;
     let mut count = 0;
 
+    let mut cycles: Vec<usize> = vec![];
+
     while finished == false {
-        print!("\r{}", count);
-        current_nodes.iter_mut().for_each(|current_node| {
-            match &directions[count % directions.len()] {
-                Direction::Right => {
-                    *current_node = nodes
-                        .iter()
-                        .find(|node| node.name == current_node.right)
-                        .unwrap()
-                        .clone()
-                }
-                Direction::Left => {
-                    *current_node = nodes
-                        .iter()
-                        .find(|node| node.name == current_node.left)
-                        .unwrap()
-                        .clone()
-                }
-            }
-        });
-        finished = current_nodes
-            .iter()
-            .all(|node| node.name.chars().last().unwrap() == 'Z');
+        let current_dir = &directions[count % directions.len()];
+        current_nodes
+            .iter_mut()
+            .for_each(|current_node| match current_dir {
+                Direction::Right => *current_node = &map.get(*current_node).unwrap().1,
+                Direction::Left => *current_node = &map.get(*current_node).unwrap().0,
+            });
+
         count += 1;
+        current_nodes = current_nodes
+            .iter()
+            .map(|node| {
+                if node.ends_with('Z') {
+                    cycles.push(count);
+                }
+                *node
+            })
+            .filter(|node| !node.ends_with('Z'))
+            .collect();
+
+        if current_nodes.is_empty() {
+            finished = true;
+        }
     }
-    count.to_string()
+
+    lcm(cycles.as_slice()).to_string()
 }
 
 #[cfg(test)]

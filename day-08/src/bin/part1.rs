@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 fn main() {
     let input = include_str!("input1.txt");
     let output = part1(input);
@@ -10,14 +12,7 @@ enum Direction {
     Right,
 }
 
-#[derive(Debug)]
-struct Node {
-    name: String,
-    left: String,
-    right: String,
-}
-
-fn parse_input(input: &str) -> (Vec<Direction>, Vec<Node>) {
+fn parse_input(input: &str) -> (Vec<Direction>, BTreeMap<&str, (&str, &str)>) {
     let directions: Vec<Direction> = input
         .lines()
         .take(1)
@@ -30,38 +25,25 @@ fn parse_input(input: &str) -> (Vec<Direction>, Vec<Node>) {
         })
         .collect();
 
-    let mut nodes: Vec<Node> = input
+    let mut map = BTreeMap::new();
+    let _ = input
         .lines()
         .filter(|line| line.contains("="))
-        .map(|line| Node {
-            name: line[0..3].to_string(),
-            left: line[7..10].to_string(),
-            right: line[12..15].to_string(),
-        })
-        .collect();
-    nodes.sort_by(|a, b| a.name.cmp(&b.name));
-    (directions, nodes)
+        .for_each(|line| {
+            map.insert(&line[0..3], (&line[7..10], &line[12..15]));
+        });
+    (directions, map)
 }
 
 fn part1(input: &str) -> String {
-    let (directions, nodes) = parse_input(input);
-    let mut current_node = &nodes[0];
+    let (directions, map) = parse_input(input);
+    let mut current_node = "AAA";
 
     let mut count = 0;
-    while current_node.name != "ZZZ".to_string() {
+    while current_node != "ZZZ".to_string() {
         match &directions[count % directions.len()] {
-            Direction::Right => {
-                current_node = nodes
-                    .iter()
-                    .find(|node| node.name == current_node.right)
-                    .unwrap()
-            }
-            Direction::Left => {
-                current_node = nodes
-                    .iter()
-                    .find(|node| node.name == current_node.left)
-                    .unwrap()
-            }
+            Direction::Right => current_node = map.get(current_node).unwrap().1,
+            Direction::Left => current_node = map.get(current_node).unwrap().0,
         }
         count += 1;
     }
